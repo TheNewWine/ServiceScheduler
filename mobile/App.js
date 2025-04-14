@@ -5,8 +5,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-// Import screens (we'll create these next)
+// Import screens
 import LoginScreen from './screens/LoginScreen';
+import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
 import ServicesScreen from './screens/ServicesScreen';
 import SpecialEventsScreen from './screens/SpecialEventsScreen';
@@ -52,6 +53,11 @@ export default function App() {
           <Stack.Screen 
             name="Login" 
             component={LoginScreen} 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
+            name="Signup" 
+            component={SignupScreen} 
             options={{ headerShown: false }}
           />
           <Stack.Screen 

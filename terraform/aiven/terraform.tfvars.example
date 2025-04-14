@@ -1,0 +1,5 @@
+aiven_api_token    = "your-aiven-api-token"
+aiven_project_name = "your-project-name"
+# Optional: override default values
+# cloud_name = "aws-us-east-1"
+# plan = "startup-4" 

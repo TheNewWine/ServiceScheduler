@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ServiceScheduler/backend/config"
+	"github.com/ServiceScheduler/backend/internal/database"
 	"github.com/ServiceScheduler/backend/routes"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,9 @@ func main() {
 	// DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
 
 	// Initialize database
-	config.InitDB()
+	if err := database.InitDB(); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
 
 	// Create Gin router
 	router := gin.Default()
@@ -35,11 +37,13 @@ func main() {
 	// Initialize routes
 	routes.InitializeRoutes(router)
 
-	// Start server
+	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	// Start server
 	log.Printf("Server starting on port %s", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatal("Failed to start server:", err)
