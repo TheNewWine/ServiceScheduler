@@ -4,15 +4,17 @@ import { useEffect } from 'react';
 import { router } from 'expo-router';
 
 function RootLayoutNav() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace('/(tabs)');
-    } else {
-      router.replace('/(auth)/login');
+    if (!loading) {
+      if (isAuthenticated) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(auth)/login');
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loading]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

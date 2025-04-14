@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/ServiceScheduler/backend/handlers"
+	"github.com/ServiceScheduler/backend/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,6 +12,14 @@ func InitializeRoutes(router *gin.Engine) {
 	{
 		auth.POST("/login", handlers.Login)
 		auth.POST("/signup", handlers.Signup)
+		auth.POST("/logout", handlers.Logout)
+	}
+
+	// Protected routes
+	protected := router.Group("/api")
+	protected.Use(middleware.AuthMiddleware())
+	{
+		// Add protected routes here
 	}
 
 	// Service routes

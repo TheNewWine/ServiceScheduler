@@ -22,6 +22,17 @@ func main() {
 	// Create Gin router
 	router := gin.Default()
 
+	// Configure trusted proxies
+	// For development, we'll trust localhost and common development IPs
+	// In production, you should set this to your actual proxy IPs
+	router.SetTrustedProxies([]string{
+		"127.0.0.1",      // localhost
+		"::1",            // localhost IPv6
+		"localhost",      // localhost hostname
+		"192.168.0.0/16", // common local network
+		"10.0.0.0/8",     // common local network
+	})
+
 	// Configure CORS
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")

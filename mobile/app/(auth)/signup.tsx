@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { router } from 'expo-router';
-import { authService } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function SignupScreen() {
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -36,14 +35,10 @@ export default function SignupScreen() {
     try {
       setLoading(true);
       const { confirmPassword, ...signupData } = formData;
-      const response = await authService.signup(signupData);
-      
-      if (response.token) {
-        await login(response.token, response.user);
-        router.replace('/(tabs)');
-      }
+      await signup(signupData);
+      router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Signup failed');
+      Alert.alert('Error', error.response?.data?.error || 'Signup failed');
     } finally {
       setLoading(false);
     }

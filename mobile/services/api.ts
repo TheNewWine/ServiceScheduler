@@ -13,7 +13,7 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('auth_token');
+    const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,11 +27,10 @@ api.interceptors.request.use(
 // Add response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      await AsyncStorage.removeItem('auth_token');
-      // You might want to redirect to login here
+      AsyncStorage.removeItem('token');
     }
     return Promise.reject(error);
   }
@@ -41,18 +40,21 @@ export const authService = {
   login: async (email: string, password: string) => {
     const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, { email, password });
     if (response.data.token) {
-      await AsyncStorage.setItem('auth_token', response.data.token);
+      await AsyncStorage.setItem('token', response.data.token);
     }
     return response.data;
   },
   
   signup: async (userData: any) => {
     const response = await api.post(API_ENDPOINTS.AUTH.SIGNUP, userData);
+    if (response.data.token) {
+      await AsyncStorage.setItem('token', response.data.token);
+    }
     return response.data;
   },
   
   logout: async () => {
-    await AsyncStorage.removeItem('auth_token');
+    await AsyncStorage.removeItem('token');
     return api.post(API_ENDPOINTS.AUTH.LOGOUT);
   },
 };
@@ -111,4 +113,6 @@ export const eventsService = {
     const response = await api.delete(API_ENDPOINTS.EVENTS.DELETE(id));
     return response.data;
   },
-}; 
+};
+
+export default api; 

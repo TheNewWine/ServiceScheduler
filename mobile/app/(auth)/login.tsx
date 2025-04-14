@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import { router } from 'expo-router';
-import { authService } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -19,13 +18,10 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-      const response = await authService.login(email, password);
-      if (response.token) {
-        await login(response.token, response.user);
-        router.replace('/(tabs)');
-      }
+      await login(email, password);
+      router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Login failed');
+      Alert.alert('Error', error.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);
     }

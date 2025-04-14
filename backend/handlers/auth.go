@@ -56,6 +56,7 @@ func Signup(c *gin.Context) {
 		Email:                req.Email,
 		PasswordHash:         string(hashedPassword),
 		NotificationsEnabled: true,
+		CreatedAt:            time.Now(),
 	}
 
 	if err := database.DB.Create(&user).Error; err != nil {
@@ -122,5 +123,14 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, AuthResponse{
 		Token: tokenString,
 		User:  user,
+	})
+}
+
+// Logout handles user logout
+func Logout(c *gin.Context) {
+	// In a JWT-based system, logout is handled client-side by removing the token
+	// We can add additional server-side cleanup if needed
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Logged out successfully",
 	})
 }

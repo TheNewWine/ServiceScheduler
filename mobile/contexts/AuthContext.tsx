@@ -1,76 +1,95 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { authService } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any | null;
-  login: (token: string, userData: any) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (userData: any) => Promise<void>;
   logout: () => Promise<void>;
+  loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  user: null,
+  login: async () => {},
+  signup: async () => {},
+  logout: async () => {},
+  loading: true,
+});
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any | null>(null);
-  const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
+    checkAuth();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const checkAuth = async () => {
     try {
-      const token = await AsyncStorage.getItem('auth_token');
-      const userData = await AsyncStorage.getItem('user_data');
-      
-      if (token && userData) {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        // You might want to verify the token with the backend here
         setIsAuthenticated(true);
-        setUser(JSON.parse(userData));
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('Auth check failed:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const login = async (token: string, userData: any) => {
+  const login = async (email: string, password: string) => {
     try {
-      await AsyncStorage.setItem('auth_token', token);
-      await AsyncStorage.setItem('user_data', JSON.stringify(userData));
+      const response = await authService.login(email, password);
       setIsAuthenticated(true);
-      setUser(userData);
-      navigation.navigate('MainApp' as never);
+      setUser(response.user);
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('Login failed:', error);
+      throw error;
+    }
+  };
+
+  const signup = async (userData: any) => {
+    try {
+      const response = await authService.signup(userData);
+      setIsAuthenticated(true);
+      setUser(response.user);
+    } catch (error) {
+      console.error('Signup failed:', error);
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('auth_token');
-      await AsyncStorage.removeItem('user_data');
+      await authService.logout();
       setIsAuthenticated(false);
       setUser(null);
-      navigation.navigate('Login' as never);
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Logout failed:', error);
       throw error;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        user,
+        login,
+        signup,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-} 
+export const useAuth = () => useContext(AuthContext); 
