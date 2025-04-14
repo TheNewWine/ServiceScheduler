@@ -15,7 +15,7 @@ provider "aiven" {
 resource "aiven_pg" "service_scheduler_db" {
   project      = var.aiven_project_name
   cloud_name   = var.cloud_name
-  plan         = var.plan
+  plan         = "free-1-5gb"
   service_name = "service-scheduler-pg"
 
   pg_user_config {

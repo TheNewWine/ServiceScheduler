@@ -12,11 +12,5 @@ variable "aiven_project_name" {
 variable "cloud_name" {
   description = "Cloud provider and region"
   type        = string
-  default     = "aws-us-east-1"
-}
-
-variable "plan" {
-  description = "Aiven service plan"
-  type        = string
-  default     = "startup-4"
+  default     = "do-nyc" 
 } 

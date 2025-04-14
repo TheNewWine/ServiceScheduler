@@ -1,13 +1,16 @@
 package routes
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/ServiceScheduler/backend/handlers"
+	"github.com/gin-gonic/gin"
+)
 
 func InitializeRoutes(router *gin.Engine) {
 	// Auth routes
 	auth := router.Group("/api/auth")
 	{
-		auth.POST("/login", nil)    // TODO: Add login handler
-		auth.POST("/register", nil) // TODO: Add register handler
+		auth.POST("/login", handlers.Login)
+		auth.POST("/signup", handlers.Signup)
 	}
 
 	// Service routes
