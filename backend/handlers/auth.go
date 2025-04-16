@@ -21,26 +21,36 @@ func NewAuthHandler(db *gorm.DB) *AuthHandler {
 func (h *AuthHandler) Signup(c *gin.Context) {
 	var req models.SignupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid input",
+			"details": map[string]string{
+				"first_name": "First name is required",
+				"last_name":  "Last name is required",
+				"email":      "Valid email is required",
+				"password":   models.PasswordRequirements(),
+			},
+		})
 		return
 	}
 
 	// Check if user already exists
 	var existingUser models.User
 	if err := h.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "An account with this email already exists"})
 		return
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process password"})
 		return
 	}
 
 	// Create user
 	user := models.User{
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
 		Email:     req.Email,
 		Password:  string(hashedPassword),
 		CreatedAt: time.Now(),
@@ -48,37 +58,55 @@ func (h *AuthHandler) Signup(c *gin.Context) {
 	}
 
 	if err := h.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Account created successfully",
+		"user": gin.H{
+			"first_name": user.FirstName,
+			"last_name":  user.LastName,
+			"email":      user.Email,
+		},
+	})
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid input",
+			"details": map[string]string{
+				"email":    "Valid email is required",
+				"password": "Password is required",
+			},
+		})
 		return
 	}
 
 	var user models.User
 	if err := h.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
-	// Here you would typically generate a JWT token
-	// For simplicity, we'll just return a success message
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	// Return user information
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"user": gin.H{
+			"first_name": user.FirstName,
+			"last_name":  user.LastName,
+			"email":      user.Email,
+		},
+	})
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// In a real application, you would invalidate the JWT token
-	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }

@@ -7,12 +7,17 @@ import (
 	"github.com/ServiceScheduler/backend/models"
 	"github.com/ServiceScheduler/backend/routes"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func main() {
 	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	dbHost := os.Getenv("DB_HOST")
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
@@ -24,6 +29,11 @@ func main() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	// Drop existing table if it exists
+	if err := db.Migrator().DropTable(&models.User{}); err != nil {
+		log.Printf("Warning: Failed to drop table: %v", err)
 	}
 
 	// Auto-migrate the schema

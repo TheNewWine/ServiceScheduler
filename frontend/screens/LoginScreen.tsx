@@ -9,9 +9,30 @@ type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    if (!password) {
+      newErrors.password = 'Password is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:8080/auth/login', {
         method: 'POST',
@@ -23,10 +44,15 @@ const LoginScreen = () => {
 
       const data = await response.json();
       if (response.ok) {
-        // Handle successful login
-        Alert.alert('Success', 'Logged in successfully');
+        // Navigate to Home screen with user data
+        navigation.navigate('Home', { user: data.user });
       } else {
-        Alert.alert('Error', data.error || 'Login failed');
+        if (data.details) {
+          // Show detailed validation errors from the server
+          setErrors(data.details);
+        } else {
+          Alert.alert('Error', data.error || 'Login failed');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to connect to server');
@@ -36,24 +62,30 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
+      
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.email && styles.inputError]}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.password && styles.inputError]}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
+      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+
       <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
         <Text style={styles.link}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
@@ -80,8 +112,16 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 15,
+    marginBottom: 5,
     fontSize: 16,
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginBottom: 10,
   },
   button: {
     backgroundColor: '#007AFF',
