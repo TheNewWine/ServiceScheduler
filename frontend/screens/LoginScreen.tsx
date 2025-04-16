@@ -1,109 +1,105 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, Platform } from 'react-native';
-import { TextInput, Button, Text } from 'react-native-paper';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { authService } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../App';
 
-export default function LoginScreen() {
-  const navigation = useNavigation();
-  const { login } = useAuth();
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+
+const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
     try {
-      setLoading(true);
-      const response = await authService.login(email, password);
-      if (response.token) {
-        await login(response.token, response.user);
+      const response = await fetch('http://localhost:8080/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        // Handle successful login
+        Alert.alert('Success', 'Logged in successfully');
+      } else {
+        Alert.alert('Error', data.error || 'Login failed');
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to connect to server');
     }
   };
 
   return (
-    <View style={[
-      styles.container,
-      Platform.OS === 'web' && styles.webContainer
-    ]}>
-      <Text style={styles.title}>Service Scheduler</Text>
-      <View style={[
-        styles.formContainer,
-        Platform.OS === 'web' && styles.webFormContainer
-      ]}>
-        <TextInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-          secureTextEntry
-        />
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          loading={loading}
-          style={styles.button}
-        >
-          Login
-        </Button>
-        <Button
-          mode="text"
-          onPress={() => navigation.navigate('Signup' as never)}
-          style={styles.button}
-        >
-          Don't have an account? Sign up
-        </Button>
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+        <Text style={styles.link}>Don't have an account? Sign up</Text>
+      </TouchableOpacity>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     justifyContent: 'center',
-  },
-  webContainer: {
-    maxWidth: 400,
-    marginHorizontal: 'auto',
-    width: '100%',
-  },
-  formContainer: {
-    width: '100%',
-  },
-  webFormContainer: {
-    maxWidth: 400,
-    marginHorizontal: 'auto',
+    padding: 20,
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 20,
     textAlign: 'center',
-    marginBottom: 30,
   },
   input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 15,
     marginBottom: 15,
+    fontSize: 16,
   },
   button: {
-    marginTop: 10,
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 15,
   },
-}); 
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  link: {
+    color: '#007AFF',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+});
+
+export default LoginScreen; 
